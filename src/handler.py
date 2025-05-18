@@ -10,8 +10,17 @@ async def handler(job):
     job_input = JobInput(job["input"])
     engine = OpenAIvLLMEngine if job_input.openai_route else vllm_engine
     results_generator = engine.generate(job_input)
+
+    # ⬇️ On récupère toutes les batches dans une liste
+    collected = []
     async for batch in results_generator:
-        yield batch
+        collected.append(batch)
+
+    # ⬇️ On retourne l'output final avec status="COMPLETED"
+    return {
+        "output": collected[-1] if len(collected) == 1 else collected,
+        "status": "COMPLETED"
+    }
 
 runpod.serverless.start(
     {
